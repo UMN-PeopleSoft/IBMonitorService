@@ -4,7 +4,8 @@ import spock.lang.Specification
 
 class IBMonitorServiceSpec extends Specification {
 
-	def 'I can run tests.'() {
-		expect: true == false
-	}
+    def 'can run tests'() {
+        expect: true == true
+    }
+
 }
