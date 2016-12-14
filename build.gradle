@@ -1,6 +1,7 @@
 plugins {
     id 'groovy'
     id 'application'
+    id 'org.unbroken-dome.test-sets' version '1.2.0'
     id 'com.intershop.gradle.jaxb' version '1.0.0'
 }
 
@@ -42,9 +43,23 @@ task compileJaxb(dependsOn:jaxbJavaGenConfigType, type:JavaCompile) {
     classpath = sourceSets.main.compileClasspath
     destinationDir = file('build/generated/jaxb/java/configType')
 }
+jaxbJavaGenConfigType.description = 'Generate app configuration JaXB sources'
 
+compileJaxb.description = 'Compile JaXB-generated sources'
 task jarJaxbJava(dependsOn:compileJaxb, type: Jar){
     archiveName = 'ibmonitorconfig.jar'
     from('build/generated/jaxb/java/configType')
     destinationDir = file('src/main/resources')
+}
+jarJaxbJava.group = 'Jaxb code generation'
+jarJaxbJava.description = 'Generate compiled JAr of JaXB-generated sources'
+
+testSets {
+    integrationTest { dirName = 'integration-test' }
+}
+integrationTest.group = 'Verification'
+integrationTest.description = 'Runs the integration tests.'
+integrationTestJar.group =
+tasks.withType(Test) {
+    testLogging.exceptionFormat = 'full'
 }
