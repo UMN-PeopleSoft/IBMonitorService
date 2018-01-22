@@ -1,0 +1,83 @@
+---
+root:
+  emailUser: email@address.com
+  emailPassword: passw0rd!
+  emailReplyTo: email@address.com
+  emailHost: smtp.email.com
+  emailPort: '587'
+  onCallFile: "/path/file"
+  debugMode: 'ON'
+  dbType: Oracle
+  database:
+    databaseName: db1
+    host: host:1521/db1.world
+    user: dbuser
+    password: dbPass0wrd!
+    dbSchema: SYSADM
+    sleepTime: '5'
+    defaultMonitorTime: '0'
+    defaultStatusToCheck: '0,5,6'
+    defaultRetryCount: '0'
+    defaultNotifyTo: notify@email.com
+    defaultNotifyCC: ''
+    defaultNotifyInterval: '60'
+    downTimeStartDay: '1'
+    downTimeStart: '6:00'
+    downTimeEndDay: '1'
+    downTimeEnd: '12:00'
+    downTimeFrequency: '7'
+    defaultNotifyIntervalOffHours: '720'
+    startTimeOffHours: '19:00'
+    endTimeOffHours: '7:00'
+    domainStatus: 'ON'
+    monitorEvent:
+    - monitorName: PERSON_BASIC_SYNC Publications
+      serviceOperation: PERSON_BASIC_SYNC
+      operationType: PubContract
+      publishNode: YOUR_PUBLISHING_NODE
+      subscribeNode: TARGET_NODE1,TARGET_NODEx
+      status: '0,5,6'
+      action: Notfy
+      notifyTo: notify@email.com
+      notifyCC: ''
+      startTime: '06:00'
+      endTime: '22:00'
+      alertSubject: Person Basic Sync Publication Issues in Application.
+      alertText: Problems found with Person Basic Sync Publications in Application.
+      timeToCheck: '0'
+      retryCount: '0'
+      notifyInterval: '10'
+      notifyIntervalOffHours: '720'
+      escalation:
+      - notifyTo: escalate@email.com
+        escalationDelay: '0'
+        emailAdditions:
+          emailLine:
+          - line1:Description of Issue
+          - line2:THIS IS ONLY A TEST
+          - type:Incident
+          - category:Applications
+      - notifyTo: escalate2@email.com
+        escalationDelay: '10'
+        emailAdditions:
+          emailLine:
+          - line1:Description of Issue - Unresolved for 10 minutes
+          - line2:THIS IS ONLY A TEST
+          - type:Incident
+          - category:Applications
+    - monitorName: PERSON_BASIC_SYNC Subscriptions
+      serviceOperation: PERSON_BASIC_SYNC
+      operationType: SubContract
+      publishNode: PUBNODE1,PUBNODEx
+      subscribeNode: YOUR_SUBSCRIBING_NODE
+      status: '0,5,6'
+      action: Notify Each
+      notifyTo: email@address.com
+      notifyCC: ''
+      startTime: '06:00'
+      endTime: '22:00'
+      alertSubject: Person Basic Sync Subscription Issues in Application.
+      alertText: Problems found with Person Basic Sync Subscriptions in Application.
+      timeToCheck: '0'
+      notifyInterval: '60'
+      notifyIntervalOffHours: '720'

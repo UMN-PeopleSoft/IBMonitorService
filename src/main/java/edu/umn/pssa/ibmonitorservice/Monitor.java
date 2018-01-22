@@ -55,11 +55,16 @@ public class Monitor extends Thread {
 	private static final String SELECT_PUBLICATION_CONTRACTS = "Select /*+ Index(PSAPMSGPUBCON PSCPSAPMSGPUBCON) */ IBTRANSACTIONID From ";
 	private static final String SELECT_SUBSCRIPTION_CONTRACTS = "Select /*+ Index(PSAPMSGSUBCON PSCPSAPMSGSUBCON) */ IBTRANSACTIONID From ";	
 	private static final String SELECT_DOMAIN_STATUS = "Select count(*) From <SCHEMA>.PSAPMSGDOMSTAT Where DOMAIN_STATUS = 'A'";
+	private static final String SELECT_EACH = "Select 'X' From UM_IB_MONITOR Where DATABASE_NAME = ':1' and EVENT_NAME = ':2' and EVENT_TYPE = ':3' and ESCALATION = :4 and IBTRANSACTIONID = ':5'";
+	private static final String INSERT_TRANSACTION = "Insert Into UM_IB_MONITOR Values(':1', ':2', ':3', :4, ':5')";
+	private static final String DELETE_TRANSACTIONS = "Delete From UM_IB_MONITOR Where DATABASE_NAME = ':1' and EVENT_NAME = ':2' and EVENT_TYPE = ':3' and IBTRANSACTIONID not in (:4)";
 	private static final String INSERT_NODE_DOWN = "Insert Into <SCHEMA>.PSNODESDOWN Select :1, :2, :3, :4, :5, :6 From Dual Where Not Exists (Select 'X' From <SCHEMA>.PSNODESDOWN Where MSGNODENAME = :1 and TRXTYPE = :2 and IB_OPERATIONNAME = :3 and VERSIONNAME = :4)";
 	private static final String REMOVE_NODE_DOWN = "Delete From <SCHEMA>.PSNODESDOWN Where MSGNODENAME = :1 and TRXTYPE = :2 and IB_OPERATIONNAME = :3 and VERSIONNAME = :4";
 	private static final String ACTION_NOTIFY = "Notify";
 	private static final String ACTION_CANCEL = "Cancel";
 	private static final String ACTION_RESUBMIT = "Resubmit";
+	private static final String ACTION_RETRY_REACT = "Retry/React";
+	private static final String ACTION_NOTIFY_EACH = "Notify Each";
 	private static final String ACTION_CUSTOM = "Custom";
 	private static final String STATUS_OK = "";
 	private static final String STATUS_ALERT = "ALERT";
@@ -76,9 +81,10 @@ public class Monitor extends Thread {
 	private static final String ON_CALL = "On Call";
 	
 
-	private static MonitorConnection connection;
+	private MonitorConnection connection;
 	private Vector<MonitorConfig> vMonitors;
 	private Connection connMonitor;
+	private Session emailSession;
 	private int monitorId;
 	private int downTimeFrequency = 0;
 	private int defaultNotifyInterval = 0;
@@ -103,6 +109,8 @@ public class Monitor extends Thread {
 	}
 	
 	public Monitor(DatabaseType dbNode, int monitorID, boolean debugMode, String databaseType) {
+		
+		emailSession = createSession();
 		
 		monitorId = monitorID;
 		vMonitors = new Vector<MonitorConfig>();
@@ -142,7 +150,7 @@ public class Monitor extends Thread {
 		// Check if we're in debug mode for this specific Database
 		if (!debugMode) {
 			if ("ON".equalsIgnoreCase(dbNode.getDebugMode())) {
-				logger.info("Debug Mode turned on for database " + databaseName);
+				logger.info("Debug Mode turned on for database " + this.databaseName);
 				debugMode = true;
 			}
 		}
@@ -172,6 +180,7 @@ public class Monitor extends Thread {
 					monitoring = false;
 				} else {
 					logger.info("Created connection for " + databaseName + " on host " + databaseHost);
+					connection.createIBMonitorTable(connMonitor, databaseName);
 				}
 			}
 		}
@@ -199,7 +208,7 @@ public class Monitor extends Thread {
 						}
 
 						// Write to ibAlerts.log file
-						logger.info("Monitoring Database " + databaseName);
+						logger.info("Monitoring Database " + this.databaseName);
 						
 	                    if (connMonitor == null) {
 	                       logger.info("Unable to create monitoring connection for " + databaseName);
@@ -466,6 +475,7 @@ public class Monitor extends Thread {
 		configs.status = "";
 		configs.sqlStatement = sqlString;  //SQL to execute
 		configs.action = "";     //Action to be performed
+		configs.reaction = "";
 		if (defaultNotifyTo.equals("") && defaultNotifyCC.equals("")) {
 			configs.notificationFlag = false; //Notification Flag
 		} else {
@@ -496,6 +506,7 @@ public class Monitor extends Thread {
 		configs.monitorType = DOMAIN_STATUS;
 		configs.sqlStatement = sqlString;  //SQL to execute
 		configs.action = "";     //Action to be performed
+		configs.reaction = "";
 		if (defaultNotifyTo.equals("") && defaultNotifyCC.equals("")) {
 			configs.notificationFlag = false; //Notification Flag
 		} else {
@@ -549,6 +560,7 @@ public class Monitor extends Thread {
 		int transCount = 0;
 		int notifyInterval = 0;
 		Boolean resultsFound = false;
+		Boolean reaction = false;
 
 		try {
 	        Statement stmt = connMonitor.createStatement();
@@ -573,6 +585,17 @@ public class Monitor extends Thread {
 		        	   if (monitorConfigs.action.equalsIgnoreCase(ACTION_CUSTOM)) {
 		        		   // Fire the Custom Action
 		        		   monitorConfigs.customAction.fireAction(transactionID);		        		   
+		        	   } else if (monitorConfigs.action.equalsIgnoreCase(ACTION_RETRY_REACT)) {
+		        		   // First: Override resultsFound - we may or may not have to notify yet...
+		        		   resultsFound = false;
+		        		   // Second: Perform Retry/React logic.  Set reaction to true accordingly.
+		        		   if (monitorConfigs.retryReact(transactionID)) {
+		        			   reaction = true;
+		        		   }
+		        	   } else if (monitorConfigs.action.equalsIgnoreCase(ACTION_NOTIFY_EACH)) {
+		        		   //TO DO: Need new logic.
+		        		   notifyEach(monitorConfigs, transactionID);
+		        		   
 		        	   } else if (!monitorConfigs.action.equalsIgnoreCase("") && !monitorConfigs.action.equalsIgnoreCase(ACTION_NOTIFY)) {
 		        		  executeUpdate(transactionID, monitorConfigs.operationType, monitorConfigs.action, databaseName, connMonitor);
 		        		  logger.info("executeUpdate fired on Transaction ID: " + transactionID + " in " + databaseName + ": Retry Count = " + monitorConfigs.retryCount);
@@ -603,12 +626,23 @@ public class Monitor extends Thread {
 		        }
 	        }
 
-	        stmt.close();
+	        if (monitorConfigs.action.equalsIgnoreCase(ACTION_NOTIFY_EACH) || monitorConfigs.reaction.equalsIgnoreCase(ACTION_NOTIFY_EACH)) {
+	        	// Remove any Transaction IDs from UM_IB_MONITOR no longer found to be an issue
+	        	stmt.execute(DELETE_TRANSACTIONS.replace(":1",  databaseName)
+	        			                        .replace(":2", monitorConfigs.monitorName)
+	        			                        .replace(":3", monitorConfigs.monitorType)
+	        			                        .replace(":4", monitorConfigs.sqlStatement));
+	        }
 		} catch (SQLException s) {
 			logger.info("Processing caught SQLException in " + databaseName + ": " + s.getMessage() + CRLF +
 					    "SQL Statement is: " + monitorConfigs.sqlStatement);
 		} catch (Exception e) {
-			logger.info("Processing caught Exception in " + databaseName + ": " + e.getMessage());
+			logger.info("Processing caught Exception in " + databaseName + ": " + e.toString() + CRLF + monitorConfigs.monitorName);
+		}
+		
+		// Check if "reaction" is triggered: If so, set ResultsFound = true as well.
+		if (reaction) {
+			resultsFound = true;
 		}
 		
 		if (resultsFound) {
@@ -674,16 +708,14 @@ public class Monitor extends Thread {
 
 	        stmt.close();
 		} catch (SQLException s) {
-			logger.info("Processing caught SQLException in " + databaseName + ": " + s.getMessage());
+			logger.info("Processing Node Down caught SQLException in " + databaseName + ": " + s.getMessage());
 		} catch (Exception e) {
-			logger.info("Processing caught Exception in " + databaseName + ": " + e.getMessage());
+			logger.info("Processing Node Down caught Exception in " + databaseName + ": " + e.getMessage());
 		}
 		
 	}
 
-	// Method to send a notification to configured parties.
-	private static void sendNotification(String sendTo, String sendCC, String subject, String message) {		
-		
+	private Session createSession() {
 		Properties props = new Properties();
 		props.setProperty("mail.smtp.host", IBMonitorSvc.emailHost);
 		props.setProperty("mail.smtp.port", String.valueOf(IBMonitorSvc.emailPort));
@@ -693,11 +725,17 @@ public class Monitor extends Thread {
 
 		Authenticator auth = new SMTPAuthenticator();
 		Session session = Session.getInstance(props, auth);
-	    session.setDebug(false);
+		session.setDebug(false);
+		
+		return session;
 
+	}
+	
+	// Method to send a notification to configured parties.
+	private void sendNotification(String sendTo, String sendCC, String subject, String message) {		
 		try {
 		    // create a message
-		    Message msg = new MimeMessage(session);
+		    Message msg = new MimeMessage(emailSession);
 
 		    // set the from and to address
 		    InternetAddress addressFrom = new InternetAddress(IBMonitorSvc.emailReplyTo);
@@ -721,10 +759,12 @@ public class Monitor extends Thread {
 		    Transport.send(msg);
 		} catch(MessagingException me) {
 			logger.info("Error sending secure email message using password auth - " + me.getMessage());
+		} catch (Exception e) {
+			logger.info("Exception caught when attempting to send email: " + e.getMessage());
 		}
 	}
 	
-	private static InternetAddress[] parseRecipients (String recipientList) {
+	private InternetAddress[] parseRecipients (String recipientList) {
 		String[] tempArray;
 		InternetAddress[] recipientArray;
 		
@@ -750,7 +790,7 @@ public class Monitor extends Thread {
 		return null;
  	}
 	
-	public static String updateRecipientsWithOnCall(String originalRecipients) {
+	public String updateRecipientsWithOnCall(String originalRecipients) {
 		String newRecipients = "";
 		String onCallRecipients = "";
 		// Open the On Call File, read any items not commented out (with #)
@@ -786,14 +826,14 @@ public class Monitor extends Thread {
 		return newRecipients;
 	}
 
-	private static class SMTPAuthenticator extends javax.mail.Authenticator {
+	private class SMTPAuthenticator extends javax.mail.Authenticator {
 		public PasswordAuthentication getPasswordAuthentication() {
 			return new PasswordAuthentication(IBMonitorSvc.emailUser, IBMonitorSvc.emailPassword);
 		}
 	}
 
 	// Method to send notification
-	private static void prepareNotification(MonitorConfig monitorConfigs, String message) {
+	private void prepareNotification(MonitorConfig monitorConfigs, String message) {
 		sendNotification(monitorConfigs.notifyTo, monitorConfigs.notifyCC, monitorConfigs.alertSubject, message);
 		String recipients = monitorConfigs.notifyTo + ";" + monitorConfigs.notifyCC;
 
@@ -808,7 +848,7 @@ public class Monitor extends Thread {
 		
 	}
 	
-	private static void prepareEscalations(MonitorConfig monitorConfigs, String message) {
+	private void prepareEscalations(MonitorConfig monitorConfigs, String message) {
 		Calendar now = Calendar.getInstance();
 		// Notify any Escalations
 		if (monitorConfigs.escalations == null) {
@@ -836,8 +876,116 @@ public class Monitor extends Thread {
 					sendNotification(escalation.email, "", monitorConfigs.alertSubject, message + CRLF + escalation.emailText);
 					escalation.notificationSent = true;
 					escalation.lastNotification = now;
+					String recipients = monitorConfigs.notifyTo + ";" + monitorConfigs.notifyCC;
+					logger.info("   ESCALATION: " + monitorConfigs.alertStatus + " Sent for " + monitorConfigs.alertSubject + " to " + recipients);
 				}
 			}			
+		}
+	}
+	
+	private void prepareEscalationsEach(MonitorConfig monitorConfigs, String message, String transactionID) {
+		Calendar now = Calendar.getInstance();
+		// Notify any Escalations
+		if (monitorConfigs.escalations == null) {
+			// Do nothing
+		} else {
+			for (int i=0; i < monitorConfigs.escalations.size(); i ++) {
+				EscalationConfig escalation = monitorConfigs.escalations.elementAt(i);
+				if (checkPreviouslyNotified(monitorConfigs.monitorName, monitorConfigs.monitorType, transactionID, i + 1)) {
+					Calendar nextNotify = null;
+					// Set the Date/Time the issue was detected - even if not null for Notify Each
+					escalation.issueDetected = now;
+					nextNotify = (Calendar)escalation.issueDetected.clone();
+					nextNotify.add(Calendar.MINUTE, escalation.escalationDelay);					
+
+					// Check if monitor should fire
+					if (nextNotify != null && nextNotify.compareTo(now) <=0 ) {
+						String subject = monitorConfigs.alertSubject + " Transaction ID: " + transactionID;
+						sendNotification(escalation.email, "", subject, message + CRLF + 
+								escalation.emailText.replaceAll("TRANSACTIONID", transactionID));
+						escalation.notificationSent = true;
+						escalation.lastNotification = now;
+						String recipients = monitorConfigs.notifyTo + ";" + monitorConfigs.notifyCC;
+						logger.info("   ESCALATION (EACH): " + monitorConfigs.alertStatus + " Sent for " + subject + " to " + recipients);
+					}
+				} else {
+					escalation.notificationSent = true;
+					escalation.lastNotification = now;
+				}
+			}			
+		}
+	}
+	
+	private void notifyEach(MonitorConfig configs, String transactionID) {
+		int notifyInterval = 0;
+		// Determine if we're "Off Hours", and use the right interval
+		if (isInWindow(WINDOW_OFF_HOURS, configs, configs.startTimeOffHours, configs.endTimeOffHours)) {
+			notifyInterval = configs.notificationIntervalOffHours;
+		} else {
+			notifyInterval = configs.notificationInterval;
+		}
+
+		String msg = configs.alertText + " Transaction ID: " + transactionID;
+		if (checkPreviouslyNotified(configs.monitorName, configs.monitorType, transactionID, 0)) {
+			prepareNotification(configs, msg);
+		} else if (notifyInterval > 0){
+			if (configs.lastNotification == null) {
+				configs.lastNotification = Calendar.getInstance();
+			}
+			Calendar rightNow = Calendar.getInstance();
+			Calendar nextNotify = null;
+			nextNotify = (Calendar)configs.lastNotification.clone();
+			nextNotify.add(Calendar.MINUTE, notifyInterval);
+
+			if (rightNow.after(nextNotify)) {
+				prepareNotification(configs, configs.alertText);
+            }		
+		}
+		prepareEscalationsEach(configs, msg, transactionID);
+
+	}
+	
+	private boolean checkPreviouslyNotified(String eventName, String eventType, String transactionID, int escalation) {
+		Connection conn;
+		conn =  connection.openDBConnection(databaseHost, databaseUser, databasePassword);
+		
+		try {
+			Statement stmt = conn.createStatement();
+			ResultSet rs = stmt.executeQuery(SELECT_EACH.replace(":1", databaseName)
+					                                    .replace(":2", eventName)
+					                                    .replace(":3", eventType)
+					                                    .replace(":4", String.valueOf(escalation))
+					                                    .replace(":5", transactionID));
+			if (rs.next()) {
+                if (rs.getString(1).equalsIgnoreCase("X")) {
+        			stmt.close();
+                	return false;
+                }
+			}
+
+			// If the data has not been added, insert the row, but return false.
+			insertTransaction(conn, eventName, eventType, transactionID, escalation);
+			stmt.close();
+		} catch (SQLException s) {
+			logger.info("SQLException encountered in " + databaseName + ": " + s.getMessage());
+		}
+		
+		return true;
+	}
+	
+	private void insertTransaction(Connection conn, String eventName, String eventType, String transactionID, int escalation) {
+		try {
+			// If the data has not been added, insert the row, but return false.
+			Statement stmt = conn.createStatement();
+			stmt.execute(INSERT_TRANSACTION.replace(":1", databaseName)
+					                       .replace(":2", eventName)
+					                       .replace(":3", eventType)
+					                       .replace(":4", String.valueOf(escalation))
+					                       .replace(":5", transactionID));
+
+			stmt.close();
+		} catch (SQLException s) {
+			logger.info("SQLException encountered in " + databaseName + ": " + s.getMessage());
 		}
 	}
 
@@ -1046,6 +1194,7 @@ public class Monitor extends Thread {
 				}
 			}
 		}
+
 		
 		return false;
 	}
@@ -1062,6 +1211,7 @@ public class Monitor extends Thread {
 		public int age;
 		public int threshold;
 		public String action;
+		public String reaction;
 		public String alertStatus;
 		public String sqlStatement;
 		public String notifyTo;
@@ -1124,8 +1274,9 @@ public class Monitor extends Thread {
 			timeToCheck = getNodeValue(configNode.getTimeToCheck(), 0);
 
 			action = getNodeValue(configNode.getAction(), "");
+			reaction = getNodeValue(configNode.getReaction(), "");
 			notifyTo = getNodeValue(configNode.getNotifyTo(), "");
-			notifyCC = getNodeValue(configNode.getNotifyTo(), "");
+			notifyCC = getNodeValue(configNode.getNotifyCC(), "");
 			alertSubject = getNodeValue(configNode.getAlertSubject(), "");
 			alertText = getNodeValue(configNode.getAlertText(), "");
 			
@@ -1135,6 +1286,8 @@ public class Monitor extends Thread {
 			} else if (action.equalsIgnoreCase(ACTION_CANCEL)) {
 				notificationFlag = true;
 			} else if (action.equalsIgnoreCase(ACTION_CUSTOM)) {
+				notificationFlag = true;
+			} else if (action.equalsIgnoreCase(ACTION_RETRY_REACT)) {
 				notificationFlag = true;
 			} else {
 				notificationFlag = false;				
@@ -1238,9 +1391,54 @@ public class Monitor extends Thread {
 	        }
 		}
 		
+		// Function to perform the Retry/React logic
+		private boolean retryReact(String transactionID) {
+			boolean react = false;
+			String sqlRecord = "";
+			String statusField = "";
+			
+			//Determine the Record/Field to update
+			if (operationType.equalsIgnoreCase(PUBLICATION_CONTRACT)) {
+				sqlRecord = "PSAPMSGPUBCON";
+				statusField = "PUBCONSTATUS";
+			} else if (operationType.equalsIgnoreCase(SUBSCRIPTION_CONTRACT)) {
+				sqlRecord = "PSAPMSGSUBCON";
+				statusField = "SUBCONSTATUS";
+			} else if (operationType.equalsIgnoreCase(MESSAGE_INSTANCE)) {
+				sqlRecord = "PSAPMSGPUBHDR";
+				statusField = "PUBSTATUS";
+			}
+
+			try {
+				Statement stmt = connMonitor.createStatement();
+				String sqlUpdate = "Update " + databaseSchema + "." + sqlRecord;
+				sqlUpdate = sqlUpdate + " Set " + statusField + " = " + 1 + ", STATUSSTRING = 'NEW'";
+				sqlUpdate = sqlUpdate + " Where IBTRANSACTIONID = '" + transactionID + "' and RETRYCOUNT < " + retryCount;
+				if (stmt.executeUpdate(sqlUpdate) == 0) {
+					react = true;
+					if (reaction.equalsIgnoreCase(ACTION_CANCEL)) {
+						executeUpdate(transactionID, operationType, reaction, databaseName, connMonitor);
+						logger.info("Retry/Resubmit executeUpdate fired on Transaction ID: " + transactionID + " in " + databaseName + ": Retry Count = " + retryCount);
+					} else if (reaction.equalsIgnoreCase(ACTION_CUSTOM)) {
+						// Fire the Custom Action
+						customAction.fireAction(transactionID);
+					} else if (reaction.equals(ACTION_NOTIFY_EACH)) {
+						notifyEach(this, transactionID);
+					} else if (!reaction.equals(ACTION_NOTIFY)) {
+						logger.info("Invalid Reaction encountered on Transaction ID: " + transactionID + " in " + databaseName);
+					}
+				}
+				stmt.close();
+			} catch (SQLException s) {
+				logger.info("SQLException encountered in " + databaseName + ": " + s.getMessage());
+			}	
+
+			return react;
+		}
+		
 	}
 	
-	private static String getNodeValue(Object nodeValue, String defaultValue) {
+	private String getNodeValue(Object nodeValue, String defaultValue) {
 		if (nodeValue == null) {
 			return defaultValue;
 		} else {
@@ -1248,7 +1446,7 @@ public class Monitor extends Thread {
 		}
 	}
 
-	private static int getNodeValue(Object nodeValue, int defaultValue) {
+	private int getNodeValue(Object nodeValue, int defaultValue) {
 		if (nodeValue == null) {
 			return defaultValue;
 		} else {

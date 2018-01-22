@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<root>
+	<emailUser>email@address.com</emailUser>
+	<emailPassword>passw0rd!</emailPassword>
+	<emailReplyTo>email@address.com</emailReplyTo>
+	<emailHost>smtp.email.com</emailHost>
+	<emailPort>587</emailPort>
+	<onCallFile>/path/file</onCallFile>
+	<debugMode>ON</debugMode>
+	<dbType>Oracle</dbType>
+	<database>
+		<databaseName>db1</databaseName>
+		<host>host:1521/db1.world</host>
+		<user>dbuser</user>
+		<password>dbPass0wrd!</password>
+		<dbSchema>SYSADM</dbSchema>
+		<sleepTime>5</sleepTime>
+		<defaultMonitorTime>0</defaultMonitorTime>
+		<defaultStatusToCheck>0,5,6</defaultStatusToCheck>
+		<defaultRetryCount>0</defaultRetryCount>
+		<defaultNotifyTo>notify@email.com</defaultNotifyTo>
+		<defaultNotifyCC></defaultNotifyCC>
+		<defaultNotifyInterval>60</defaultNotifyInterval>
+		<downTimeStartDay>1</downTimeStartDay>
+		<downTimeStart>6:00</downTimeStart>
+		<downTimeEndDay>1</downTimeEndDay>
+		<downTimeEnd>12:00</downTimeEnd>
+		<downTimeFrequency>7</downTimeFrequency>
+		<defaultNotifyIntervalOffHours>720</defaultNotifyIntervalOffHours>
+		<startTimeOffHours>19:00</startTimeOffHours>
+		<endTimeOffHours>7:00</endTimeOffHours>
+		<domainStatus>ON</domainStatus>
+		<monitorEvent>
+			<monitorName>PERSON_BASIC_SYNC Publications</monitorName>
+			<serviceOperation>PERSON_BASIC_SYNC</serviceOperation>
+			<operationType>PubContract</operationType>
+			<publishNode>YOUR_PUBLISHING_NODE</publishNode>
+			<subscribeNode>TARGET_NODE1,TARGET_NODEx</subscribeNode>
+			<status>0,5,6</status>
+			<action>Notfy</action>
+			<notifyTo>notify@email.com</notifyTo>
+			<notifyCC></notifyCC>
+			<startTime>06:00</startTime>
+			<endTime>22:00</endTime>
+			<alertSubject>Person Basic Sync Publication Issues in Application.</alertSubject>
+			<alertText>Problems found with Person Basic Sync Publications in Application.</alertText>
+			<timeToCheck>0</timeToCheck>
+			<retryCount>0</retryCount>
+			<notifyInterval>10</notifyInterval>
+			<notifyIntervalOffHours>720</notifyIntervalOffHours>
+			<escalation>
+				<notifyTo>escalate@email.com</notifyTo>
+				<escalationDelay>0</escalationDelay>
+				<emailAdditions>
+					<emailLine>line1:Description of Issue</emailLine>
+					<emailLine>line2:THIS IS ONLY A TEST</emailLine>
+					<emailLine>type:Incident</emailLine>
+					<emailLine>category:Applications</emailLine>
+				</emailAdditions>
+			</escalation>
+			<escalation>
+				<notifyTo>escalate2@email.com</notifyTo>
+				<escalationDelay>10</escalationDelay>
+				<emailAdditions>
+					<emailLine>line1:Description of Issue - Unresolved for 10 minutes</emailLine>
+					<emailLine>line2:THIS IS ONLY A TEST</emailLine>
+					<emailLine>type:Incident</emailLine>
+					<emailLine>category:Applications</emailLine>
+				</emailAdditions>
+			</escalation>
+		</monitorEvent>
+		<monitorEvent>
+			<monitorName>PERSON_BASIC_SYNC Subscriptions</monitorName>
+			<serviceOperation>PERSON_BASIC_SYNC</serviceOperation>
+			<operationType>SubContract</operationType>
+			<publishNode>PUBNODE1,PUBNODEx</publishNode>
+			<subscribeNode>YOUR_SUBSCRIBING_NODE</subscribeNode>
+			<status>0,5,6</status>
+			<action>Notify Each</action>
+			<notifyTo>email@address.com</notifyTo>
+			<notifyCC></notifyCC>
+			<startTime>06:00</startTime>
+			<endTime>22:00</endTime>
+			<alertSubject>Person Basic Sync Subscription Issues in Application.</alertSubject>
+			<alertText>Problems found with Person Basic Sync Subscriptions in Application.</alertText>
+			<timeToCheck>0</timeToCheck>
+			<notifyInterval>60</notifyInterval>
+			<notifyIntervalOffHours>720</notifyIntervalOffHours>
+		</monitorEvent>
+	</database>
+</root>
