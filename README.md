@@ -13,6 +13,8 @@ Database access is required to run the monitor, and the ID used for connectivity
   * PSAPMSGDOMSTAT
   * PSNODESDOWN
   
+Additionally, the IB Monitor will create a table called UM_IB_MONITOR in the schema for the Database User used for executing the monitors.  This table is used with the "Notify Each" logic.
+  
 ## Installing the Monitor
 To install the IB Monitor Service, pull the project to obtain a local copy.
 
@@ -106,14 +108,21 @@ Within each set of database configurations, multiple events can be set up. Each 
  * **subscribeNode:** This can specify the subscribing node for the monitored event. Useful when the same message can be sent to multiple systems which may dictate how the event is handled. 
  * **status:** This is a comma separated list of the numeric values associated with each status to look for. A list of values is provided above. 
  * **timeToCheck:** This is the amount of time passed the monitor will check. When set to 0, there is no time limit to how far back the monitor will look. For example, if the defaultMonitorTime is set to 60, the monitor will only look at the last hour for the default conditions. 
- * **retryCount:** This is a configuration for future use. It will dictate how many times to attempt an action such as Resubmit or Cancel. 
+ * **retryCount:** This is the configuration for the maximum number of Retry attempts for the Action of "Retry/React". 
  * **theshold:** This is a numeric value designating the threshold at which the event is to be triggered. 
  * **age:** A numeric value representing the age in number of minutes for messages to trigger the event.
  * **action:** This configuration indicates what action to take. Valid values are:
-   * Notify - sends a page/email to specified recipients. 
+   * Notify - sends a page/email to specified recipients.
+   * Notify Each - sends a notification and/or escalation per Transaction ID found.
    * Cancel - cancels the message(s). 
    * Resubmit - resubmits the message(s). 
+   * Retry/React - attempts to resubmit the message until the configured retryCount is reached, then fires the configured reaction.
    * Custom - Perform a custom SQL action
+ * **reaction:** This configuration indicates what action to take when an Action of Retry/React exceeds the maximum retry count. Valid values are:
+   * Notify - sends a page/email to specified recipients
+   * Notify Each - sends a notification and/or escalation per Transaction ID found.
+   * Cancel - cancels the message(s).
+   * Custom - Perform a custom SQL action 
  * **notifyTo:** This configuration is used to provide the list of recipients for the Notification of default events. If a value of On Call is found in the configurations, it will include the active recipients from the onCallFile configuration, if the file is valid. 
  * **notifyCC:** This configuration is the same as above, however the recipients will be CC'd on the notification. 
  * **alertSubject:** This is the subject line of the alert to be sent out. 
