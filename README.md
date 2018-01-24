@@ -18,9 +18,12 @@ Additionally, the IB Monitor will create a table called UM_IB_MONITOR in the sch
 ## Installing the Monitor
 To install the IB Monitor Service, pull the project to obtain a local copy.
 
-`git clone <project> && ./gradlew assembleDist `
+`git clone https://github.com/UMN-PeopleSoft/IBMonitorService`
 
 When you are ready to distribute the application to your monitoring platform, run the `assembleDist` task.  Once complete, you will have a .tar and .zip file you can use for monitoring.
+
+If you want a simple "one-liner" to pull and build, you can run the following:
+`git clone https://github.com/UMN-PeopleSoft/IBMonitorService && cd IBMonitorService && ./gradlew assembleDist`
   
 ## Configuring the Monitor
 There are a few layers for the configuraiton of the monitoring.  Base configuration is the highest level of configuration and is used primarily to set the email configurations, along with specifying the database type and optionally setting debug mode.
