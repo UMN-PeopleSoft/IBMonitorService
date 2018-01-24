@@ -38,8 +38,8 @@ Some core information must be configured for notifications to be sent. This info
   * **emailUser:** This is the user id for the email account used to send email/pager notifications. 
   * **emailPassword:** This is the password for emailUser. 
   * **emailReplyTo:** This is the email address used as the "Reply To" email address for notifications. 
-  * **emailHost:** This is the host address for emailUser, and should be smtp.umn.edu in most cases. 
-  * **emailPort:** This is the port for the emailHost, and should be 465 in most cases. 
+  * **emailHost:** This is the host address for emailUser. Example: smtp.gmail.com
+  * **emailPort:** This is the port for the emailHost. Example: 465
   * **onCallFile:** This configuration allows for specifying the location of a file containing On Call information. The expected format of the file should be:
    * name:notification
    * #name:notification - this format will be treated as having the name commented out, and will not send a notification.
