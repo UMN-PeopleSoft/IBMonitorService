@@ -14,6 +14,17 @@ Database access is required to run the monitor, and the ID used for connectivity
   * PSNODESDOWN
   
 Additionally, the IB Monitor will create a table called UM_IB_MONITOR in the schema for the Database User used for executing the monitors.  This table is used with the "Notify Each" logic.
+
+### Prerequisites
+#### Running the IB Monitor
+To run the IB Monitor, you will need:
+   * A machine to run the monitor on.  Choose your favorite OS.
+   * Java
+   * The IB Monitor
+   
+#### Contributing to the IB Monitor
+   * Git
+   * Java Development Environment
   
 ## Installing the Monitor
 The first step to installing the monitor is to acquire a pre-built disribution or pull the project and build your own distribution.
