@@ -16,7 +16,18 @@ Database access is required to run the monitor, and the ID used for connectivity
 Additionally, the IB Monitor will create a table called UM_IB_MONITOR in the schema for the Database User used for executing the monitors.  This table is used with the "Notify Each" logic.
   
 ## Installing the Monitor
-To install the IB Monitor Service, pull the project to obtain a local copy.
+The first step to installing the monitor is to acquire a pre-built disribution or pull the project and build your own distribution.
+
+### Acquiring the IB Monitor
+#### Acquiring a Pre-Built Distribution
+At the top of the page, you will see two links:
+   * Download .zip
+   * Download .tar.gz
+
+Choose the distribution package you'd like, click and download.
+
+#### Building Your Own Distribution
+To build your own distribution, pull the project if you have not already done so to obtain a local copy.
 
 `git clone https://github.com/UMN-PeopleSoft/IBMonitorService`
 
@@ -24,8 +35,11 @@ When you are ready to distribute the application to your monitoring platform, ru
 
 If you want a simple "one-liner" to pull and build, you can run the following:
 `git clone https://github.com/UMN-PeopleSoft/IBMonitorService && cd IBMonitorService && ./gradlew assembleDist`
+
+### Installing the Monitor
+Once you have a distribution, extract the files into a folder on the machine where you plan to run the monitor.
   
-## Configuring the Monitor
+### Configuring the Monitor
 There are a few layers for the configuraiton of the monitoring.  Base configuration is the highest level of configuration and is used primarily to set the email configurations, along with specifying the database type and optionally setting debug mode.
 
 The next level of configuration is for each database, or application, to be monitored.  Here, configuration is centered around the connectivity for the database, and rules to use for default monitoring, such as status, time periods, notifications and more.
