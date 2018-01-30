@@ -1,7 +1,4 @@
-# IBMonitor
-University of Minnesota PeopleSoft Integration Broker Monitoring Service
-
-## Event Configurations 
+# Event Configurations 
 Within each set of database configurations, multiple events can be set up. Each event can watch for a specified set of conditions. An event can notify via page/email, automatically resubmit or cancel a message, or execute a custom action (SQL).  Default checks are performed which look for events not specifically configured, ie: catches everything but the configured events, so you don't have to configure every possible scenario. Events are configured with the following: 
  * **monitorName:** This is a name for the monitored event. 
  * **operationType:** This specifies if the monitored event is for Operation Instances, Publication Contracts or Subscription Contracts. Valid values are: 
@@ -58,17 +55,17 @@ Within each set of database configurations, multiple events can be set up. Each 
  * **downtimeEnd:** This is a configuration used to designate the end time of the downtime. Value should be entered as HH:MM, using a 24 hour clock. 
  * **downtimeFrequency:** This configuration specifies the number of days between downtime windows. For example, if the value 7 is provided, the downtime would be weekly. 
 
-### Escalation Configurations 
+## Escalation Configurations 
 Each Event can be configured to have any number of Escalations.  Escalations will fire independent of the parent Event and the other Escalations.  They can fire immediately, or after a defined delay.  Escalations can also include additional text in the notifications.  Escalations are configured with the following:
  * **notifyTo:** This configuration is used to provide the list of recipients for the Notification of default events. If a value of On Call is found in the configurations, it will include the active recipients from the onCallFile configuration, if the file is valid. 
  * **escalationDelay:** This configuration is used to specify the delay (in minutes) before firing the notification when the parent event is triggered. 
  * **notifyInterval:** This configuration specifies the period of time to wait (in minutes) between notifications of the same event. ie: if a message remains in error, resend the notification at each notifyInterval minutes until the condition is no longer found. 
 
-### Email Addition Configurations 
+## Email Addition Configurations 
 Each Escalation can be configured to have any number of Email Additions.  Email Additions are configured with the following:
  * **emailLine:** Text to be added to the notification, such as email or text message.  
 
-### Custom Action Configurations 
+## Custom Action Configurations 
 If an Event is set to use an Action of "Custom", the SQL for the Action should be configured in the Custom Actions section of the XML.  Custom Actions are configured with the following:
  * **sqlCommand:** The SQL to fire when the parent Event is triggered.  **NOTE:** To include the Transaction ID of the message in the SQL, place **\<TRANSACTIONID\>** in the SQL command, and it will be replaced with the actual Transaction ID at execution time.  
 
