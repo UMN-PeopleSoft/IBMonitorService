@@ -1,7 +1,4 @@
-# IBMonitor
-University of Minnesota PeopleSoft Integration Broker Monitoring Service
-
-## Database Configurations 
+# Database Configurations 
 For each database to be monitored, connection and default event information can be configured in nodes under base configurations. The available database configurations include: 
  * **databaseName:** Specify the common name for the database. This does not have to match the actual database, nor does it have to match the value in the tnsnames.ora file. This is used in the monitor to know what database it is watching, and the name provided will be used for things such as logging output.
  * **dbType:** Parameter to set the database type if different than the "global" database type.
