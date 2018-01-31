@@ -5,7 +5,7 @@ The first step to installing the monitor is to acquire a pre-built disribution o
 ### Running the IB Monitor
 To run the IB Monitor, you will need:
    * A machine to run the monitor on.  Choose your favorite OS.
-   * Java
+   * Java 1.8
    * The IB Monitor
    
 ### Contributing to the IB Monitor
