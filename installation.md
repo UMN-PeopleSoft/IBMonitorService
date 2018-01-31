@@ -28,6 +28,7 @@ To build your own distribution, pull the project if you have not already done so
 When you are ready to distribute the application to your monitoring platform, run the `assembleDist` task.  Once complete, you will have a .tar and .zip file you can use for monitoring.
 
 If you want a simple "one-liner" to pull and build, you can run the following:
+
 `git clone https://github.com/UMN-PeopleSoft/IBMonitorService && cd IBMonitorService && ./gradlew assembleDist`
 
 ## Installing the Monitor
