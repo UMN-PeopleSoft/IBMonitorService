@@ -37,7 +37,7 @@
 			<publishNode>YOUR_PUBLISHING_NODE</publishNode>
 			<subscribeNode>TARGET_NODE1,TARGET_NODEx</subscribeNode>
 			<status>0,5,6</status>
-			<action>Notfy</action>
+			<action>Notify</action>
 			<notifyTo>notify@email.com</notifyTo>
 			<notifyCC></notifyCC>
 			<startTime>06:00</startTime>
