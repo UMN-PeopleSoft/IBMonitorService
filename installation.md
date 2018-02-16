@@ -33,3 +33,5 @@ If you want a simple "one-liner" to pull and build, you can run the following:
 
 ## Installing the Monitor
 Once you have a distribution, extract the files into a folder on the machine where you plan to run the monitor.
+
+After you have the IB Monitor code in place, download the desired sample configuration file. Copy the downloaded sample.<xxx> file to the IBMonitorService/bin folder.  You can use any file name you would like.
