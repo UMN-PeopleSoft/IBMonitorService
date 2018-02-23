@@ -141,7 +141,13 @@ public class IBMonitorSvc {
 				onCallFileName = configs.getOnCallFile();
 				emailReplyTo = configs.getEmailReplyTo();
 				emailUser = configs.getEmailUser();
+				if (emailUser == null) {
+					emailUser = "";
+				}
 				emailPassword = configs.getEmailPassword();
+				if (emailPassword == null) {
+					emailPassword = "";
+				}
 				emailHost = configs.getEmailHost();
 				emailPort = configs.getEmailPort();
 				debugMode = "ON".equalsIgnoreCase(configs.getDebugMode());

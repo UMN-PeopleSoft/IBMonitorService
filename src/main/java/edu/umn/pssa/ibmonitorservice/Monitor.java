@@ -90,6 +90,7 @@ public class Monitor extends Thread {
 	private int defaultNotifyInterval = 0;
 	private int defaultNotifyIntervalOffHours = 0;
 	private Boolean domainStatusCheck = false;
+	private Boolean hasNotifyEach = false;
 	private long sleepTime = 0;
 	private String databaseName = "";
 	private String databaseHost = "";
@@ -161,7 +162,7 @@ public class Monitor extends Thread {
 			// Output SQL Statements
 			for (int i = 0; i < vMonitors.size(); i++) {
 				logger.info("logging Debug SQL");
-				debugLog.debug(vMonitors.get(i).monitorName);
+				debugLog.debug("-- " + vMonitors.get(i).monitorName);
 				debugLog.debug(vMonitors.get(i).sqlStatement);
 				debugLog.debug(CRLF);
 			}
@@ -180,7 +181,9 @@ public class Monitor extends Thread {
 					monitoring = false;
 				} else {
 					logger.info("Created connection for " + databaseName + " on host " + databaseHost);
-					connection.createIBMonitorTable(connMonitor, databaseName);
+					if (hasNotifyEach) {
+						connection.createIBMonitorTable(connMonitor, databaseName);						
+					}
 				}
 			}
 		}
@@ -214,7 +217,9 @@ public class Monitor extends Thread {
 	                       logger.info("Unable to create monitoring connection for " + databaseName);
 	                    } else {
 	                       // Execute Monitors
-						   executeMonitors();
+	                    	if (vMonitors.size() > 0) {
+	 						   executeMonitors();
+	                    	}
 						}
 						connMonitor.close();
 						connMonitor = null;						
@@ -270,13 +275,17 @@ public class Monitor extends Thread {
 			vConfigs.add(index, tmpMonitor);
 			numConfigs = index;
 		}
+		
+		if (numConfigs != 0) {
+			numConfigs = numConfigs + 1;
+		}
 
 		// Populate 3 more entries in vConfigs for default monitors (Pubs/Subs/Instances)
-		vConfigs.add(numConfigs + 1, populateDefaultConfig(MESSAGE_INSTANCE, 
+		vConfigs.add(numConfigs, populateDefaultConfig(MESSAGE_INSTANCE, 
 				     generateDefaultMonitorSQL(MESSAGE_INSTANCE_STATUS_COLUMN, defaultStatus, defaultTimeFrame, defaultRetryCount, vConfigs)));
-		vConfigs.add(numConfigs + 2, populateDefaultConfig(PUBLICATION_CONTRACT, 
+		vConfigs.add(numConfigs + 1, populateDefaultConfig(PUBLICATION_CONTRACT, 
 				     generateDefaultMonitorSQL(PUBLICATION_CONTRACT_STATUS_COLUMN, defaultStatus, defaultTimeFrame, defaultRetryCount, vConfigs)));
-		vConfigs.add(numConfigs + 3, populateDefaultConfig(SUBSCRIPTION_CONTRACT,
+		vConfigs.add(numConfigs + 2, populateDefaultConfig(SUBSCRIPTION_CONTRACT,
 				     generateDefaultMonitorSQL(SUBSCRIPTION_CONTRACT_STATUS_COLUMN, defaultStatus, defaultTimeFrame, defaultRetryCount, vConfigs)));
 		
 		if (domainStatusCheck) {
@@ -717,11 +726,23 @@ public class Monitor extends Thread {
 
 	private Session createSession() {
 		Properties props = new Properties();
-		props.setProperty("mail.smtp.host", IBMonitorSvc.emailHost);
-		props.setProperty("mail.smtp.port", String.valueOf(IBMonitorSvc.emailPort));
-		props.setProperty("mail.smtp.auth", "true");
-		props.setProperty("mail.transport.protocol", "smtp");
-		props.setProperty("mail.smtp.starttls.enable","true"); //Important: must start TLS
+		if (IBMonitorSvc.emailUser.isEmpty() || IBMonitorSvc.emailUser.equals("")) {
+			props.setProperty("mail.smtp.host", IBMonitorSvc.emailHost);
+			props.setProperty("mail.smtp.port", String.valueOf(IBMonitorSvc.emailPort));
+			props.setProperty("mail.smtp.auth", "false");
+			props.setProperty("mail.transport.protocol", "smtp");
+			if (IBMonitorSvc.emailPort == 25) {
+				props.setProperty("mail.smtp.starttls.enable","false"); //Important: must start TLS
+			} else {
+				props.setProperty("mail.smtp.starttls.enable","true"); //Important: must start TLS
+			}
+		} else {
+			props.setProperty("mail.smtp.host", IBMonitorSvc.emailHost);
+			props.setProperty("mail.smtp.port", String.valueOf(IBMonitorSvc.emailPort));
+			props.setProperty("mail.smtp.auth", "true");
+			props.setProperty("mail.transport.protocol", "smtp");
+			props.setProperty("mail.smtp.starttls.enable","true"); //Important: must start TLS
+		}
 
 		Authenticator auth = new SMTPAuthenticator();
 		Session session = Session.getInstance(props, auth);
@@ -1275,6 +1296,11 @@ public class Monitor extends Thread {
 
 			action = getNodeValue(configNode.getAction(), "");
 			reaction = getNodeValue(configNode.getReaction(), "");
+			
+			// Check for hasNotifyEach
+			if (action.equalsIgnoreCase(ACTION_NOTIFY_EACH) || reaction.equalsIgnoreCase(ACTION_NOTIFY_EACH)) {
+				hasNotifyEach = true;
+			}
 			notifyTo = getNodeValue(configNode.getNotifyTo(), "");
 			notifyCC = getNodeValue(configNode.getNotifyCC(), "");
 			alertSubject = getNodeValue(configNode.getAlertSubject(), "");
