@@ -14,7 +14,7 @@ To run the IB Monitor, you will need:
   
 ## Acquiring the IB Monitor
 ### Acquiring a Pre-Built Distribution
-At the top of the page, you will see two links:
+In the left-hand navigation of the page, you will see two links:
    * Download .zip
    * Download .tar.gz
 
@@ -34,4 +34,4 @@ If you want a simple "one-liner" to pull and build, you can run the following:
 ## Installing the Monitor
 Once you have a distribution, extract the files into a folder on the machine where you plan to run the monitor.
 
-After you have the IB Monitor code in place, download the desired sample configuration file. Copy the downloaded sample.<xxx> file to the IBMonitorService/bin folder.  You can use any file name you would like.
+After you have the IB Monitor code in place, download the desired sample configuration file. Copy the downloaded sample.xxx file to the IBMonitorService/bin folder.  You can use any file name you would like.
