@@ -289,7 +289,7 @@ public class Monitor extends Thread {
 				     generateDefaultMonitorSQL(SUBSCRIPTION_CONTRACT_STATUS_COLUMN, defaultStatus, defaultTimeFrame, defaultRetryCount, vConfigs)));
 		
 		if (domainStatusCheck) {
-			vConfigs.add(numConfigs + 4, populateDomainStatusConfig());
+			vConfigs.add(numConfigs + 3, populateDomainStatusConfig());
 		}
 		
 		return vConfigs;
