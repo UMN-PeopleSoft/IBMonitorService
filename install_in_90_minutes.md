@@ -2,14 +2,13 @@
 The steps below should help you get the IB Monitor running a basic configuration in less than 90 minutes.
 
 ## Prerequisites
-### Running the IB Monitor
 To run the IB Monitor, you will need:
    * A machine to run the monitor on.  Choose your favorite OS.
    * Java 1.8
    * The IB Monitor
    
 ## Get Up and Running
-**Step 1.** Go to the IB Monitor GitHub Page: https://umn-peoplesoft.github.io/IBMonitorService/
+**Step 1.** Go to the IB Monitor GitHub Page: <https://umn-peoplesoft.github.io/IBMonitorService/>
 
 **Step 2.**	Choose your preferred distribution, and download from the left hand navigation/menu
 
