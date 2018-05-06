@@ -6,7 +6,7 @@
 /* The sidebar menu */
 .sidenav {
     width: 20%; /* Set the width of the sidebar */
-    position: relative;
+    position: fixed;
     z-index: 1; /* Stay on top */
     top: 0; /* Stay at the top */
     left: 0;
