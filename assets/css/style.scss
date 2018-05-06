@@ -5,13 +5,14 @@
 
 /* The sidebar menu */
 .sidenav {
-    width: 15%; /* Set the width of the sidebar */
+    width: 20%; /* Set the width of the sidebar */
     position: fixed;
     z-index: 1; /* Stay on top */
     top: 0; /* Stay at the top */
     left: 0;
     background-color: #e7e7e7;
     padding-top: 50px;
+    overflow-y: scroll;
 }
 
 /* The navigation menu links */
