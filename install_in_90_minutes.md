@@ -46,7 +46,7 @@ To run the IB Monitor, you will need:
 **Step 1.**	Execute the monitor.  Powershell example below
    * $env:JAVA_HOME="c:\path\to\jdk8"
    * $env:PATH="$env:JAVA_HOME\bin;$env:PATH"
-   * .\bin\IBMonitorService.bat .\configs.yaml – configuration file is only required if not “configs.xml”
+   * .\bin\IBMonitorService.bat .\bin\configs.yaml – configuration file is only required if not “configs.xml”
 
 ## Running the IB Monitor NOT on Windows
 **Step 1.**	Execute the IBMonitorService/bin/IBMonitorService file.
