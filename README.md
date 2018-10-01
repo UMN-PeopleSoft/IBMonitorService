@@ -44,8 +44,8 @@ Some core information must be configured for notifications to be sent. This info
   * **emailHost:** This is the host address for emailUser. Example: smtp.gmail.com
   * **emailPort:** This is the port for the emailHost. Example: 465
   * **onCallFile:** This configuration allows for specifying the location of a file containing On Call information. The expected format of the file should be:
-   * name:notification
-   * #name:notification - this format will be treated as having the name commented out, and will not send a notification.
+    * `name:notification`
+    * `#name:notification` - this format will be treated as having the name commented out, and will not send a notification.
   * **debugMode:** Flag to set a debug mode, which will only write the generated SQL to a file.
   * **dbType:** Parameter to set the database type, ie: Oracle.
 
