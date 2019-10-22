@@ -12,16 +12,13 @@ mainClassName = 'edu.umn.pssa.ibmonitorservice.IBMonitorSvc'
 dependencies {
 	// mandatory dependencies for using Spock
 	testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
-
-    compile files('src/main/resources/ibmonitorconfig.jar')
-
-    compile 'com.oracle.jdbc:ojdbc7:12.1.0.2'
-	compile group: 'log4j', name: 'log4j', version: '1.2.17'
-	compile group: 'javax.mail', name: 'mail', version: '1.4.7'
-	compile group: 'org.json', name: 'json', version: '20140107'
-	compile group: 'pl.droidsonroids.yaml', name: 'snakeyaml', version: '1.18.2'
-	compile group: 'com.microsoft.sqlserver', name: 'mssql-jdbc', version: '6.2.2.jre8'
-
+  compile files('src/main/resources/ibmonitorconfig.jar')
+  compile 'com.oracle.jdbc:ojdbc7:12.1.0.2'
+	compile 'log4j:log4j:1.2.17'
+	compile 'javax.mail:mail:1.4.7'
+	compile 'org.json:json:20140107'
+	compile 'pl.droidsonroids.yaml:snakeyaml:1.18.2'
+	compile 'com.microsoft.sqlserver:mssql-jdbc:6.2.2.jre8'
 }
 
 run {
