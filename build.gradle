@@ -4,8 +4,9 @@ plugins {
     id 'com.intershop.gradle.jaxb' version '1.0.0'
 }
 
-repositories.maven { url 'https://nexus.oit.umn.edu/content/groups/public' }
-
+repositories {
+    maven { url 'https://artifactory.umn.edu/artifactory/libs-release' }
+}
 mainClassName = 'edu.umn.pssa.ibmonitorservice.IBMonitorSvc'
 
 dependencies {
@@ -14,13 +15,13 @@ dependencies {
 
     compile files('src/main/resources/ibmonitorconfig.jar')
 
-    compile 'com.oracle:ojdbc6:11.2.0.4'
+    compile 'com.oracle.jdbc:ojdbc7:12.1.0.2'
 	compile group: 'log4j', name: 'log4j', version: '1.2.17'
 	compile group: 'javax.mail', name: 'mail', version: '1.4.7'
 	compile group: 'org.json', name: 'json', version: '20140107'
 	compile group: 'pl.droidsonroids.yaml', name: 'snakeyaml', version: '1.18.2'
 	compile group: 'com.microsoft.sqlserver', name: 'mssql-jdbc', version: '6.2.2.jre8'
-	
+
 }
 
 run {
