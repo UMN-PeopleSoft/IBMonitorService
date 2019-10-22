@@ -18,7 +18,7 @@ dependencies {
 	compile 'javax.mail:javax.mail-api:1.6.2'
 	compile 'org.json:json:20190722'
 	compile 'pl.droidsonroids.yaml:snakeyaml:1.18.2'
-	compile 'com.microsoft.sqlserver:mssql-jdbc:6.2.2.jre8'
+	compile 'com.microsoft.sqlserver:mssql-jdbc:6.4.0.jre8'
 }
 
 run {
