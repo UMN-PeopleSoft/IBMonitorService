@@ -15,7 +15,7 @@ dependencies {
   compile files('src/main/resources/ibmonitorconfig.jar')
   compile 'com.oracle.jdbc:ojdbc7:12.1.0.2'
 	compile 'log4j:log4j:1.2.17'
-	compile 'javax.mail:mail:1.4.7'
+	compile 'javax.mail:javax.mail-api:1.6.2'
 	compile 'org.json:json:20140107'
 	compile 'pl.droidsonroids.yaml:snakeyaml:1.18.2'
 	compile 'com.microsoft.sqlserver:mssql-jdbc:6.2.2.jre8'
